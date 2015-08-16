@@ -116,15 +116,21 @@ var filterList = argv._.filter(function (v) {
 })
 
 // Filter the passed deps (result from david) by the dependency names passed on the command line
-function filterDeps (deps) {
-  if (!filterList.length) return deps
+function filterDeps (ignore, deps) {
+  var specifiedDeps = filterList.length
+    ? Object.keys(deps).reduce(function (filteredDeps, name) {
+      if (filterList.indexOf(name) !== -1) {
+        filteredDeps[name] = deps[name]
+      }
+      return filteredDeps
+    }, {})
+    : deps
 
-  return Object.keys(deps).reduce(function (filteredDeps, name) {
-    if (filterList.indexOf(name) !== -1) {
-      filteredDeps[name] = deps[name]
-    }
-    return filteredDeps
-  }, {})
+  return ignore
+    ? specifiedDeps.filter(function (dep) {
+      return ignore.indexOf(dep) === -1
+    })
+    : specifiedDeps
 }
 
 // Get updated deps, devDeps and optionalDeps
@@ -150,7 +156,8 @@ function getUpdatedDeps (pkg, cb) {
       if (err) return cb(err)
 
       david.getUpdatedDependencies(pkg, xtend(opts, {optional: true}), function (err, optionalDeps) {
-        cb(err, filterDeps(deps), filterDeps(devDeps), filterDeps(optionalDeps))
+        var ignore = pkg.davidIgnore
+        cb(err, filterDeps(ignore, deps), filterDeps(ignore, devDeps), filterDeps(ignore, optionalDeps))
       })
     })
   })
