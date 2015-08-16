@@ -127,9 +127,12 @@ function filterDeps (ignore, deps) {
     : deps
 
   return ignore
-    ? specifiedDeps.filter(function (dep) {
-      return ignore.indexOf(dep) === -1
-    })
+    ? Object.keys(specifiedDeps).reduce(function (result, name) {
+      if (ignore.indexOf(dep) === -1) {
+        result[name] = specifiedDeps[name]
+      }
+      return result
+    }, {})
     : specifiedDeps
 }
 
